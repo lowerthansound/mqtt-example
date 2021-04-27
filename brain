@@ -1,0 +1,68 @@
+#!/usr/bin/env python
+#
+# Simulates the brain, which tells organism to breathe
+
+import logging
+
+import paho.mqtt.client as mqtt
+
+from config import config
+
+
+logger = logging.getLogger('brain')
+
+
+def main():
+    # Setup logging
+    logging.basicConfig(level=logging.INFO)
+
+    # If the brain disconnects, we want it to catch up to the body
+    mqttc = mqtt.Client(client_id='brain', clean_session=False)
+    mqttc.on_connect = event__connect
+    mqttc.on_message = event__message
+    mqttc.connect(
+            config.mqtt.host, port=config.mqtt.port, keepalive=25)
+    # the brain always try to be there :D
+    mqttc.loop_forever(retry_first_connection=True)
+    # Starts the brain
+        # Setup MQTT
+            # Create client
+            # Connect
+            # Hear messages
+            # React to messages
+    # Listens to status of body
+    # If it is dying, starts breathing
+    # - Everything is signals ! -
+
+
+def event__connect(client, userdata, flags, rc):
+    logger.info('Brain is connected!')
+    logger.info('Flags: ' + repr(flags))
+
+    # We don't want to lose organism messages!
+    # (we also don't want to receive them twice)
+    client.subscribe('organism/output', qos=2)
+
+
+def event__message(client, userdata, message):
+    logger.info(f'Received message: {message.payload}.')
+
+    if message.topic == 'organism/output':
+        content = message.payload.decode('utf8')
+        event__organism_msg(client, content)
+
+
+def event__organism_msg(client, text):
+    if text == 'dying':
+        # tell organism to breathe
+        #
+        # the message should arrive (qos=2)
+        #
+        # but, wedon't want to retain it as a "status"
+        # (it is a command)
+        client.publish('organism/input', payload='breathe', qos=2)
+        logger.info('Told organism to breathe.')
+
+
+if __name__ == '__main__':
+    main()

@@ -1,0 +1,5 @@
+#!/bin/bash
+#
+# Run broker at the specified port
+
+mosquitto --port "$MQTT_PORT" "$@"
