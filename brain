@@ -13,11 +13,8 @@ logger = logging.getLogger('brain')
 
 
 def main():
-    # Setup logging
-    logging.basicConfig(level=logging.INFO)
-
     # If the brain disconnects, we want it to catch up to the body
-    mqttc = mqtt.Client(client_id='brain', clean_session=False)
+    mqttc = mqtt.Client(client_id='brain', clean_session=True)
     mqttc.on_connect = event__connect
     mqttc.on_message = event__message
     mqttc.connect(
@@ -45,10 +42,10 @@ def event__connect(client, userdata, flags, rc):
 
 
 def event__message(client, userdata, message):
-    logger.info(f'Received message: {message.payload}.')
+    content = message.payload.decode('utf-8')
+    logger.info(f'Received message: {content}')
 
     if message.topic == 'organism/output':
-        content = message.payload.decode('utf8')
         event__organism_msg(client, content)
 
 
@@ -61,8 +58,13 @@ def event__organism_msg(client, text):
         # but, wedon't want to retain it as a "status"
         # (it is a command)
         client.publish('organism/input', payload='breathe', qos=2)
-        logger.info('Told organism to breathe.')
+        logger.info(f'Sent message: breathe')
 
 
 if __name__ == '__main__':
+    logging.basicConfig(
+        level=logging.INFO,
+        format='%(asctime)s Brain: %(message)s',
+        datefmt='%H:%M:%S',
+    )
     main()
