@@ -81,14 +81,11 @@ def event__breathe(client):
     client.publish('organism/output', 'breathing', qos=2, retain=True)
     logger.info('Sent message: breathing')
 
-    def _out_of_breath():
-        client.publish('organism/output', 'dying', qos=2, retain=True)
-        logger.info('Sent message: dying')
-    # Wait 2s
+    # Wait 5s
     # Set status to dying again
-    from threading import Timer
-    t = Timer(2, _out_of_breath)
-    t.start()
+    time.sleep(5)
+    client.publish('organism/output', 'dying', qos=2, retain=True)
+    logger.info('Sent message: dying')
 
 
 if __name__ == '__main__':
